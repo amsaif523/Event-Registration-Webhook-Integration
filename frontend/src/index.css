@@ -1,0 +1,195 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-surface font-sans text-base text-body antialiased;
+    font-variant-numeric: normal;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display text-ink;
+  }
+
+  /* Tabular figures wherever numbers have to line up in columns. */
+  table,
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* One focus treatment for the whole app. Keyboard only, never on mouse click. */
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand-500/60 ring-offset-2 ring-offset-white;
+  }
+
+  /* 16px minimum on inputs so iOS Safari does not zoom the viewport on focus. */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  @screen sm {
+    input,
+    select,
+    textarea {
+      font-size: 0.9375rem;
+    }
+  }
+
+  ::selection {
+    @apply bg-brand-100 text-ink;
+  }
+}
+
+@layer components {
+  .hairline {
+    @apply border-hairline;
+  }
+
+  .card {
+    @apply rounded-card border border-hairline bg-white;
+  }
+
+  /* Skeleton shimmer used by every loading state. */
+  .skeleton {
+    @apply relative overflow-hidden rounded bg-slate-200/70;
+  }
+
+  .skeleton::after {
+    @apply absolute inset-0 animate-shimmer bg-gradient-to-r from-transparent via-white/70 to-transparent;
+    content: '';
+    transform: translateX(-100%);
+  }
+}
+
+/*
+ * Declared here as well as in tailwind.config.js. The datatable owns its row
+ * elements and only accepts inline styles, so that row references this
+ * animation by name — and a name that only exists because some other component
+ * happens to use the utility class is a dependency waiting to break silently.
+ */
+@keyframes arrive-flash {
+  0%,
+  100% {
+    background-color: transparent;
+  }
+  30% {
+    background-color: rgb(236 253 255);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/*
+ * react-international-phone restyled onto our tokens.
+ *
+ * The library ships its own borders, heights and focus rings; we strip those
+ * and let the wrapper in PhoneField own the border, so the control is
+ * indistinguishable from a TextInput sitting next to it.
+ *
+ * Note the two background variables. `--react-international-phone-background-color`
+ * has to be transparent so the input and country button inherit the wrapper's
+ * white, but the dropdown falls back to that same variable for its own
+ * background — leaving it transparent makes the menu see-through. The dropdown
+ * therefore gets an explicit opaque background of its own.
+ */
+.phone-field {
+  --react-international-phone-height: 2.625rem; /* 42px inside a 1px border = 44px total, matches h-11 */
+  --react-international-phone-background-color: transparent;
+  --react-international-phone-border-color: transparent;
+  --react-international-phone-text-color: #0b1220;
+  --react-international-phone-font-size: 16px;
+  --react-international-phone-border-radius: 0;
+  --react-international-phone-country-selector-background-color-hover: #f1f5f9;
+  --react-international-phone-country-selector-arrow-color: #94a3b8;
+  --react-international-phone-country-selector-arrow-size: 4px;
+  --react-international-phone-flag-width: 20px;
+  --react-international-phone-flag-height: 20px;
+  --react-international-phone-dropdown-item-font-size: 14px;
+  --react-international-phone-dropdown-item-height: 36px;
+  --react-international-phone-dropdown-item-dial-code-color: #94a3b8;
+  --react-international-phone-dropdown-item-background-color: #ffffff;
+  --react-international-phone-selected-dropdown-item-background-color: #ecfdff;
+  --react-international-phone-selected-dropdown-item-text-color: #0b1220;
+  --react-international-phone-dropdown-top: 46px;
+  --react-international-phone-dropdown-shadow: 0 2px 4px rgba(11, 18, 32, 0.05),
+    0 16px 32px -16px rgba(11, 18, 32, 0.16);
+}
+
+@screen sm {
+  .phone-field {
+    --react-international-phone-font-size: 0.9375rem;
+  }
+}
+
+.phone-field .react-international-phone-input-container {
+  width: 100%;
+}
+
+/* The library gives the input no flex-grow, so it would sit at its intrinsic
+   width and leave a gap. */
+.phone-field .react-international-phone-input {
+  @apply min-w-0 flex-1 bg-transparent px-3 text-ink placeholder:text-meta;
+  border: 0;
+  outline: none;
+}
+
+.phone-field .react-international-phone-country-selector-button {
+  @apply gap-1 rounded-none border-0 border-r border-hairline pl-3 pr-2;
+  background-color: transparent;
+  margin-right: 0;
+}
+
+.phone-field .react-international-phone-country-selector-button:focus-visible {
+  @apply bg-slate-100;
+  outline: none;
+}
+
+/* Opaque, above the sticky header, and never wider than the viewport. */
+.phone-field .react-international-phone-country-selector-dropdown {
+  @apply rounded-card border border-hairline bg-white py-1;
+  z-index: 50;
+  width: min(320px, calc(100vw - 3rem));
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.phone-field .react-international-phone-country-selector-dropdown__list-item {
+  @apply px-3;
+}
+
+.phone-field .react-international-phone-country-selector-dropdown__list-item-country-name {
+  @apply text-body;
+}
+
+.phone-field .react-international-phone-country-selector-dropdown__list-item--focused,
+.phone-field .react-international-phone-country-selector-dropdown__list-item:hover {
+  @apply bg-brand-50;
+}
+
+.phone-field .react-international-phone-input:disabled,
+.phone-field .react-international-phone-country-selector-button--disabled {
+  @apply cursor-not-allowed text-meta;
+  background-color: transparent;
+}
