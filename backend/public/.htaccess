@@ -1,0 +1,33 @@
+# Apache (XAMPP) — send everything that is not a real file to the front
+# controller. Requires mod_rewrite; if /api/* returns 404, that is the first
+# thing to check.
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Honour the directory the app is served from, so it works in a subfolder
+    # as well as at a vhost root.
+    RewriteBase /
+
+    # Serve existing files and directories directly (the built frontend).
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Everything else goes to index.php.
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set Referrer-Policy "no-referrer"
+</IfModule>
+
+# .env must never be served, whatever else is misconfigured.
+<FilesMatch "^\.env">
+    Require all denied
+</FilesMatch>
+
+Options -Indexes
+DirectoryIndex index.php
