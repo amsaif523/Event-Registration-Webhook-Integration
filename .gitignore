@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+vendor/
+
+# Build output
+dist/
+dist-ssr/
+
+# Environment — never commit real credentials. .env.example is the template.
+.env
+.env.local
+.env.*.local
+*.local
+
+# Tooling caches
+.phpunit.result.cache
+.phpunit.cache/
+.eslintcache
+
+# Logs
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# The assignment brief itself. It is the hiring company's document, not ours to
+# republish on a public repository.
+*.pdf
