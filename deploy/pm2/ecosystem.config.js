@@ -15,7 +15,7 @@ module.exports = {
       name: 'eventide-frontend',
       cwd: '/home/abbas/apps/Event-Registration-Webhook-Integration/frontend',
       script: 'npx',
-      args: 'serve -s dist -l 5006',
+      args: 'serve -s dist -l 5007',
       interpreter: 'none',
     },
   ],
