@@ -99,6 +99,9 @@ $router->post('/api/dashboard/summary', (new DashboardController())->summary(...
 
 /* ------------------------------------------------------------------- demo */
 
-$router->post('/api/dev/simulate-webhook', (new DevController())->simulateWebhook(...), $protected);
+// Unauthenticated on purpose: it is meant to be triggered from the public
+// tracking page by whoever just registered, not only from the admin panel.
+// DEMO_MODE is the actual gate — DevController refuses to run without it.
+$router->post('/api/dev/simulate-webhook', (new DevController())->simulateWebhook(...), [$json]);
 
 return $router;

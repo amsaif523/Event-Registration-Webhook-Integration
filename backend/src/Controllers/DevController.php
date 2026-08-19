@@ -15,7 +15,8 @@ use App\Services\SignatureService;
 use App\Services\WebhookService;
 
 /**
- * The webhook simulator behind the admin panel's demo button.
+ * The webhook simulator behind the "Simulate ticketing system" panel, shown
+ * on the public tracking page and the admin approvals screen alike.
  *
  * It exists because a reviewer opens a URL, not a terminal. Without it, the
  * webhook half of the flow is invisible unless you are willing to run curl with
@@ -26,7 +27,10 @@ use App\Services\WebhookService;
  * that signed in the browser would have to ship the secret to it, which would
  * defeat the entire point of having one.
  *
- * Gated twice: DEMO_MODE must be on, and the caller must be signed in.
+ * Unauthenticated: DEMO_MODE is the only gate, checked below. Whoever holds a
+ * registration reference can already see and poll that registration's status
+ * with it, so letting them also trigger its confirmation is not a new
+ * capability — and it is what lets the public tracking page use this too.
  */
 final class DevController
 {

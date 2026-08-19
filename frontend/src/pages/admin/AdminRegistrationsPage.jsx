@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { USE_MOCK } from '../../api/index.js';
 import { cn } from '../../lib/cn.js';
 import { useAppData } from '../../state/AppDataContext.jsx';
-import { useNavigation } from '../../state/NavigationContext.jsx';
+import { useNavigation, VIEWS } from '../../state/NavigationContext.jsx';
 import { useToast } from '../../state/ToastContext.jsx';
 import { formatDate, formatDateTime } from '../../lib/format.js';
 import { statusMeta, statusValues } from '../../lib/status.js';
@@ -11,11 +11,10 @@ import Badge from '../../components/ui/Badge.jsx';
 import CopyButton from '../../components/ui/CopyButton.jsx';
 import Icon from '../../components/icons/Icon.jsx';
 import JsonBlock from '../../components/JsonBlock.jsx';
-import WebhookSimulator from '../../components/WebhookSimulator.jsx';
 import SearchInput from '../../components/ui/SearchInput.jsx';
 import SlideOver from '../../components/ui/SlideOver.jsx';
 import SelectMenu from '../../components/ui/SelectMenu.jsx';
-import { EmptyState, ErrorState } from '../../components/ui/States.jsx';
+import { Banner, EmptyState, ErrorState } from '../../components/ui/States.jsx';
 import DataTable from '../../components/ui/DataTable.jsx';
 import Pagination from '../../components/ui/Pagination.jsx';
 import useListQuery from '../../hooks/useListQuery.js';
@@ -138,10 +137,9 @@ export default function AdminRegistrationsPage() {
     reload,
     webhooksForReference,
     listWebhookEvents,
-    simulateWebhook,
   } = useAppData();
   const { toast } = useToast();
-  const { eventId } = useNavigation();
+  const { eventId, navigate } = useNavigation();
 
   const [selected, setSelected] = useState(null);
 
@@ -278,35 +276,6 @@ export default function AdminRegistrationsPage() {
     // `version` bumps after a simulated delivery, which is what refreshes this.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected, version]);
-
-  /**
-   * Firing a test delivery lives here rather than on the public tracking page.
-   * Someone who has just registered should see their status and nothing else; a
-   * tool for provoking webhooks is staff equipment, and this panel already has
-   * the record and its deliveries in front of you.
-   */
-  const runSimulation = async (mode) => {
-    try {
-      const result = await simulateWebhook({ reference: selected.reference, mode });
-      const meta = statusMeta('webhook', result.log.status);
-      if (result.log.status === 'processed') {
-        toast.success('Webhook delivered', 'Signature verified, registration confirmed.');
-      } else if (result.log.status === 'duplicate') {
-        toast.info('Duplicate ignored', 'Same delivery id, returned 200 without changing anything.');
-      } else {
-        toast.error(
-          `Webhook rejected: ${meta.label}`,
-          result.log.error_message ?? 'The delivery was not accepted.',
-        );
-      }
-      // Keep the open panel showing the updated record.
-      setSelected((current) =>
-        current && result.registration?.reference === current.reference ? result.registration : current,
-      );
-    } catch (error) {
-      toast.error('Could not send the webhook', error?.message);
-    }
-  };
 
   return (
     <div className="p-5 sm:p-8">
@@ -483,6 +452,22 @@ export default function AdminRegistrationsPage() {
               </div>
             </div>
 
+            {selected.status === 'pending' && (
+              <Banner tone="warning" title="Waiting on the ticketing system">
+                <p>
+                  This registration has not been confirmed yet.{' '}
+                  <button
+                    type="button"
+                    onClick={() => navigate(VIEWS.adminApprovals)}
+                    className="font-medium text-amber-900 underline underline-offset-2"
+                  >
+                    Go to Approvals
+                  </button>{' '}
+                  to confirm or reject it.
+                </p>
+              </Banner>
+            )}
+
             <section>
               <h3 className="text-[11px] font-semibold uppercase tracking-wider text-meta">Registration</h3>
               <dl className="mt-1 divide-y divide-hairline">
@@ -500,12 +485,6 @@ export default function AdminRegistrationsPage() {
                 </DetailRow>
               </dl>
             </section>
-
-            <WebhookSimulator
-              reference={selected.reference}
-              attempts={selectedDeliveries}
-              onSimulate={runSimulation}
-            />
 
             <section>
               <div className="flex items-center justify-between gap-3">

@@ -3,11 +3,13 @@ import { useAppData } from '../state/AppDataContext.jsx';
 import { useNavigation, VIEWS } from '../state/NavigationContext.jsx';
 import { useToast } from '../state/ToastContext.jsx';
 import { formatDate, formatDateTime, formatTime } from '../lib/format.js';
+import { statusMeta } from '../lib/status.js';
 import Badge from '../components/ui/Badge.jsx';
 import Button from '../components/ui/Button.jsx';
 import CopyButton from '../components/ui/CopyButton.jsx';
 import Icon from '../components/icons/Icon.jsx';
 import StatusTimeline from '../components/StatusTimeline.jsx';
+import WebhookSimulator from '../components/WebhookSimulator.jsx';
 import { Field, TextInput } from '../components/ui/Field.jsx';
 import { Banner, Skeleton } from '../components/ui/States.jsx';
 
@@ -18,6 +20,8 @@ export default function RegistrationStatusPage() {
     getRegistration,
     getEvent,
     lookupRegistration,
+    webhooksForReference,
+    simulateWebhook,
     isLoading,
   } = useAppData();
   const { reference, openStatus, backToEvents, navigate } = useNavigation();
@@ -165,6 +169,25 @@ export default function RegistrationStatusPage() {
 
   const confirmed = registration.status === 'confirmed';
 
+  const runSimulation = async (mode) => {
+    try {
+      const result = await simulateWebhook({ reference: registration.reference, mode });
+      const meta = statusMeta('webhook', result.log.status);
+      if (result.log.status === 'processed') {
+        toast.success('Webhook delivered', 'Signature verified, registration confirmed.');
+      } else if (result.log.status === 'duplicate') {
+        toast.info('Duplicate ignored', 'Same delivery id, returned 200 without changing anything.');
+      } else {
+        toast.error(
+          `Webhook rejected: ${meta.label}`,
+          result.log.error_message ?? 'The delivery was not accepted.',
+        );
+      }
+    } catch (error) {
+      toast.error('Could not send the webhook', error?.message);
+    }
+  };
+
   return (
     <div className="mx-auto max-w-8xl px-5 py-8 sm:px-8 sm:py-12">
       <button
@@ -263,6 +286,15 @@ export default function RegistrationStatusPage() {
         </div>
         <StatusTimeline registration={registration} />
       </section>
+      </div>
+
+      <div className="mt-5">
+        <WebhookSimulator
+          reference={registration.reference}
+          attempts={webhooksForReference(registration.reference)}
+          onSimulate={runSimulation}
+          fullWidth
+        />
       </div>
     </div>
   );

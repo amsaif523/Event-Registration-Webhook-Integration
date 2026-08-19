@@ -39,7 +39,7 @@ const MODES = [
   },
 ];
 
-export default function WebhookSimulator({ reference, onSimulate, attempts = [] }) {
+export default function WebhookSimulator({ reference, onSimulate, attempts = [], fullWidth = false }) {
   const [busyMode, setBusyMode] = useState(null);
 
   const run = async (mode) => {
@@ -53,20 +53,12 @@ export default function WebhookSimulator({ reference, onSimulate, attempts = [] 
 
   return (
     <section className="rounded-card border-2 border-dashed border-slate-300 bg-slate-50/60 p-5 sm:p-6">
-      <header className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2.5">
-            <h2 className="font-display text-base font-semibold text-ink">Simulate ticketing system</h2>
-            <Tag tone="amber">Demo only</Tag>
-          </div>
-          <p className="mt-1 max-w-xl text-[13px] leading-relaxed text-body">
-            Stands in for the external ticketing provider. The payload is signed on the server and posted to the
-            real webhook endpoint, so the secret is never exposed to this page.
-          </p>
-        </div>
+      <header className="flex flex-wrap items-center gap-2.5">
+        <h2 className="font-display text-base font-semibold text-ink">Simulate ticketing system</h2>
+        <Tag tone="amber">Demo only</Tag>
       </header>
 
-      <div className="mt-5 grid gap-2.5 sm:grid-cols-3 xl:grid-cols-1">
+      <div className={cn('mt-5 grid gap-2.5 sm:grid-cols-3', !fullWidth && 'xl:grid-cols-1')}>
         {MODES.map((mode) => (
           <div key={mode.id} className="flex flex-col">
             <Button
