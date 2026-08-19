@@ -52,28 +52,28 @@ document a fallback `require`-based autoloader.
 
 Tick these off before submission.
 
-- [ ] Events API: create, list, view, update
-- [ ] Event fields: name, description, date, capacity, status
-- [ ] Registration frontend: view events, select, submit form, see reference number
-- [ ] Registration fields: first name, last name, email, phone
-- [ ] Backend validation + capacity cannot be exceeded
-- [ ] `POST /api/webhooks/ticketing` updates registration status
-- [ ] Frontend demonstrates the full flow including the status change
-- [ ] Webhook security: shared secret / HMAC signature
-- [ ] Duplicate webhook handling + approach explained in README
-- [ ] Relational DB with tables for events, registrations, webhook events/logs
-- [ ] Relationships, indexes, unique constraints
-- [ ] `AI.md` documenting where AI was used, accepted, rejected, and why
-- [ ] Tests: successful registration, validation failure, capacity, successful webhook,
+- [x] Events API: create, list, view, update
+- [x] Event fields: name, description, date, capacity, status
+- [x] Registration frontend: view events, select, submit form, see reference number
+- [x] Registration fields: first name, last name, email, phone
+- [x] Backend validation + capacity cannot be exceeded
+- [x] `POST /api/webhooks/ticketing` updates registration status
+- [x] Frontend demonstrates the full flow including the status change
+- [x] Webhook security: shared secret / HMAC signature
+- [x] Duplicate webhook handling + approach explained in README
+- [x] Relational DB with tables for events, registrations, webhook events/logs
+- [x] Relationships, indexes, unique constraints
+- [x] `AI.md` documenting where AI was used, accepted, rejected, and why
+- [x] Tests: successful registration, validation failure, capacity, successful webhook,
       invalid signature, duplicate webhook
-- [ ] Public working HTTPS URL, live throughout evaluation
+- [x] Public working HTTPS URL, live throughout evaluation
 - [ ] Test/admin credentials provided (outside the repo)
-- [ ] Full local setup instructions in README
-- [ ] Migrations + seed/demo data
-- [ ] API documentation
-- [ ] Architecture/flow explanation, technical decisions, known limitations
-- [ ] `.env.example` committed, `.env` never committed
-- [ ] Answer to the "thousands of users" question
+- [x] Full local setup instructions in README
+- [x] Migrations + seed/demo data
+- [x] API documentation
+- [x] Architecture/flow explanation, technical decisions, known limitations
+- [x] `.env.example` committed, `.env` never committed
+- [x] Answer to the "thousands of users" question
 
 ---
 
@@ -255,14 +255,15 @@ Status codes stay meaningful even though the verb is always POST: 200, 201, 400,
   the reference is kept in `sessionStorage` so a page refresh on the status screen does not lose
   it. No `/events/12` routes.
 - POST responses are not cached by browsers or proxies, which is fine here but means the event
-  list re-hits the DB every time. Noted under known limitations.
+  list re-hits the DB every time.
 
 Status codes: 200, 201, 400, 401, 404, 409 (capacity full / already registered), 422 (validation),
 500.
 
-Admin auth is a single shared token sent as `X-Admin-Token`. It is compared with `hash_equals`.
-Keep it simple, document it, and note in "known limitations" that a real system needs proper user
-auth with hashed passwords and roles.
+Admin auth is real per-admin accounts: `users` + `refresh_tokens` tables, `password_hash()` +
+`password_verify()`, a short-lived JWT access token plus a rotating, revocable refresh token, both
+in `HttpOnly` cookies. See `AI.md` for why this replaced the single shared `X-Admin-Token` this
+section originally specified.
 
 ---
 
@@ -493,35 +494,35 @@ The assignment spells these out bullet by bullet in sections 9 and 10. A reviewe
 one off against the finished README.
 
 **Setup instructions (section 9):**
-- [ ] Required PHP / Node / MySQL / Apache versions, stated exactly
-- [ ] Repository clone command
-- [ ] Backend dependency install (`composer install`)
-- [ ] Frontend dependency install (`npm install`)
-- [ ] Environment configuration, copying `.env.example` to `.env`, every variable explained
-- [ ] Database creation and configuration
-- [ ] Migration command and seed command
-- [ ] How to start the backend (XAMPP vhost setup, plus IIS notes)
-- [ ] How to start the frontend (`npm run dev`)
-- [ ] How to run automated tests
-- [ ] How to access the application locally, with the exact URLs
-- [ ] Third-party service setup and API keys, using placeholders
-- [ ] Demo / test credentials
-- [ ] Troubleshooting for common issues: `mod_rewrite` off, port 80 taken by IIS or Skype,
+- [x] Required PHP / Node / MySQL / Apache versions, stated exactly
+- [x] Repository clone command
+- [x] Backend dependency install (`composer install`)
+- [x] Frontend dependency install (`npm install`)
+- [x] Environment configuration, copying `.env.example` to `.env`, every variable explained
+- [x] Database creation and configuration
+- [x] Migration command and seed command
+- [x] How to start the backend (XAMPP vhost setup, plus IIS notes)
+- [x] How to start the frontend (`npm run dev`)
+- [x] How to run automated tests
+- [x] How to access the application locally, with the exact URLs
+- [x] Third-party service setup and API keys, using placeholders
+- [x] Demo / test credentials
+- [x] Troubleshooting for common issues: `mod_rewrite` off, port 80 taken by IIS or Skype,
       MariaDB vs MySQL differences, 404 on `/api/*`, signature mismatch from trailing whitespace,
       Vite proxy not picking up
 
 **Documentation (section 10):**
-- [ ] Technologies used
-- [ ] Installation and setup
-- [ ] Environment variables
-- [ ] Database setup
-- [ ] How to run the application
-- [ ] API documentation
-- [ ] Architecture / flow explanation
-- [ ] Important technical decisions
-- [ ] Known limitations
-- [ ] Live / staging URL
-- [ ] Test credentials
+- [x] Technologies used
+- [x] Installation and setup
+- [x] Environment variables
+- [x] Database setup
+- [x] How to run the application
+- [x] API documentation
+- [x] Architecture / flow explanation
+- [x] Important technical decisions
+- [x] Known limitations
+- [x] Live / staging URL
+- [x] Test credentials
 
 The reviewer's stated bar: clone the repo, follow the README, get it running, without contacting
 you. Before submitting, delete your local copy, clone fresh into a new folder, and follow your own
