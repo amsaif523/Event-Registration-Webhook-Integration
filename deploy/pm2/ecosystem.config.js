@@ -8,17 +8,15 @@ module.exports = {
       interpreter: 'none',
     },
     {
-      // 'serve' as a script name is reserved by PM2 - it does not exec the npm
-      // `serve` package, it triggers PM2's own built-in static server, which
-      // is configured through these PM2_SERVE_* env vars, not CLI args.
+      // script must NOT be the literal string 'serve' - that name is reserved
+      // by PM2 and triggers its own built-in static server instead of the npm
+      // `serve` package, ignoring these args entirely. Going through npx keeps
+      // this unambiguous: it runs the real serve CLI with its real flags.
       name: 'eventide-frontend',
       cwd: '/home/abbas/apps/Event-Registration-Webhook-Integration/frontend',
-      script: 'serve',
-      env: {
-        PM2_SERVE_PATH: './dist',
-        PM2_SERVE_PORT: 5006,
-        PM2_SERVE_SPA: 'true',
-      },
+      script: 'npx',
+      args: 'serve -s dist -l 5006',
+      interpreter: 'none',
     },
   ],
 };
