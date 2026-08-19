@@ -23,7 +23,9 @@ export const VIEWS = {
   adminDashboard: 'admin-dashboard',
   adminEvents: 'admin-events',
   adminRegistrations: 'admin-registrations',
+  adminApprovals: 'admin-approvals',
   adminWebhooks: 'admin-webhooks',
+  adminApiExplorer: 'admin-api-explorer',
   notFound: 'not-found',
 };
 
@@ -31,7 +33,9 @@ const ADMIN_VIEWS = new Set([
   VIEWS.adminDashboard,
   VIEWS.adminEvents,
   VIEWS.adminRegistrations,
+  VIEWS.adminApprovals,
   VIEWS.adminWebhooks,
+  VIEWS.adminApiExplorer,
 ]);
 
 const INITIAL = { view: VIEWS.events, eventId: null, reference: null };

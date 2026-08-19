@@ -11,7 +11,9 @@ const NAV_ITEMS = [
   { view: VIEWS.adminDashboard, label: 'Dashboard', shortLabel: 'Home', icon: 'dashboard' },
   { view: VIEWS.adminEvents, label: 'Events', shortLabel: 'Events', icon: 'calendar' },
   { view: VIEWS.adminRegistrations, label: 'Registrations', shortLabel: 'Registrations', icon: 'list' },
+  { view: VIEWS.adminApprovals, label: 'Approvals', shortLabel: 'Approvals', icon: 'checkCircle' },
   { view: VIEWS.adminWebhooks, label: 'Webhook logs', shortLabel: 'Webhooks', icon: 'activity' },
+  { view: VIEWS.adminApiExplorer, label: 'API Explorer', shortLabel: 'API', icon: 'code' },
 ];
 
 const SIDEBAR_WIDTH = 'lg:w-64';
@@ -170,7 +172,7 @@ export default function AdminShell({ children }) {
         aria-label="Admin sections"
         className="fixed inset-x-0 bottom-0 z-40 border-t border-hairline bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden"
       >
-        <ul className="grid grid-cols-4">
+        <ul className="grid grid-cols-6">
           {NAV_ITEMS.map((item) => {
             const active = view === item.view;
             return (

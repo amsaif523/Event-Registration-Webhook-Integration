@@ -16,7 +16,9 @@ import AdminLoginPage from './pages/admin/AdminLoginPage.jsx';
 import DashboardPage from './pages/admin/DashboardPage.jsx';
 import AdminEventsPage from './pages/admin/AdminEventsPage.jsx';
 import AdminRegistrationsPage from './pages/admin/AdminRegistrationsPage.jsx';
+import AdminApprovalsPage from './pages/admin/AdminApprovalsPage.jsx';
 import WebhookLogsPage from './pages/admin/WebhookLogsPage.jsx';
+import ApiExplorerPage from './pages/admin/ApiExplorerPage.jsx';
 
 const PUBLIC_PAGES = {
   [VIEWS.events]: EventsPage,
@@ -29,7 +31,9 @@ const ADMIN_PAGES = {
   [VIEWS.adminDashboard]: DashboardPage,
   [VIEWS.adminEvents]: AdminEventsPage,
   [VIEWS.adminRegistrations]: AdminRegistrationsPage,
+  [VIEWS.adminApprovals]: AdminApprovalsPage,
   [VIEWS.adminWebhooks]: WebhookLogsPage,
+  [VIEWS.adminApiExplorer]: ApiExplorerPage,
 };
 
 const TITLES = {
@@ -41,7 +45,9 @@ const TITLES = {
   [VIEWS.adminDashboard]: 'Dashboard',
   [VIEWS.adminEvents]: 'Events · Admin',
   [VIEWS.adminRegistrations]: 'Registrations · Admin',
+  [VIEWS.adminApprovals]: 'Approvals · Admin',
   [VIEWS.adminWebhooks]: 'Webhook logs · Admin',
+  [VIEWS.adminApiExplorer]: 'API Explorer · Admin',
   [VIEWS.notFound]: 'Page not found',
 };
 
