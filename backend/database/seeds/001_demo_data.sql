@@ -27,14 +27,7 @@ ON DUPLICATE KEY UPDATE
     name = VALUES(name), description = VALUES(description), event_date = VALUES(event_date),
     venue = VALUES(venue), capacity = VALUES(capacity), status = VALUES(status);
 
-
-
--- Demo admin account. Credentials: username `admin`, password `Admin@12345`.
--- Hash generated with password_hash(..., PASSWORD_DEFAULT).
-INSERT INTO users (id, name, username, email, password_hash, role) VALUES
-(1, 'Demo Admin', 'admin', 'admin@example.com',
-    '$2y$10$LrUJyUtr98jjHsy2sTox9u3.vQPt/SVTg3SPBeYyNm/Og/DAjVsXq', 'admin')
-ON DUPLICATE KEY UPDATE
-    name = VALUES(name), email = VALUES(email), password_hash = VALUES(password_hash);
+-- The demo admin account is created by scripts/seed.php, not here — a second,
+-- conflicting insert here previously made its printed sign-in email wrong.
 
 
