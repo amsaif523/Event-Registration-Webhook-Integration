@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { USE_MOCK } from '../../api/index.js';
 import { useAppData } from '../../state/AppDataContext.jsx';
 import { useToast } from '../../state/ToastContext.jsx';
@@ -152,6 +152,13 @@ export default function WebhookLogsPage() {
   const error = list.error ?? dataError;
   const visible = list.items;
 
+  // Flips whenever the query changes underneath the table, so the datatable's
+  // own pagination snaps back to page 1 instead of showing a stale page number.
+  const [resetPage, setResetPage] = useState(false);
+  useEffect(() => {
+    setResetPage((flag) => !flag);
+  }, [list.search, list.filters, list.perPage]);
+
   /**
    * Counts for the filter options.
    *
@@ -247,14 +254,20 @@ export default function WebhookLogsPage() {
               loading={status === 'loading'}
               skeletonColumns={5}
               emptyState={emptyState}
-              pagination={false}
+              pagination
+              paginationServer
+              paginationTotalRows={list.total}
+              paginationPerPage={Number(list.perPage) || 10}
+              paginationDefaultPage={list.page}
+              paginationResetDefaultPage={resetPage}
+              onChangePage={list.setPage}
+              onChangeRowsPerPage={(newPerPage) => list.setPerPage(newPerPage)}
               sortServer
               onSort={(column, direction) => list.setSort(column.sortField, direction)}
               expandableRows
               expandableRowsComponent={PayloadPanel}
               expandOnRowClicked
               pointerOnHover
-              footer={<Pagination {...list} label="deliveries" />}
             />
 
             {/* Mobile: cards and pagination inside one bordered panel. */}

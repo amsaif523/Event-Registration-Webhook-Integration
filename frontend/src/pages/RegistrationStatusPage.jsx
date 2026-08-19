@@ -102,11 +102,8 @@ export default function RegistrationStatusPage() {
     return (
       <div className="mx-auto max-w-8xl px-5 py-8 sm:px-8 sm:py-12">
         <Skeleton className="h-4 w-24" />
-        <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] xl:items-start">
-          <div className="space-y-5">
-            <Skeleton className="h-48 w-full rounded-card" />
-            <Skeleton className="h-64 w-full rounded-card" />
-          </div>
+        <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start">
+          <Skeleton className="h-48 w-full rounded-card" />
           <Skeleton className="h-72 w-full rounded-card" />
         </div>
       </div>
@@ -186,8 +183,7 @@ export default function RegistrationStatusPage() {
         </Banner>
       )}
 
-      <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] xl:items-start">
-        <div className="space-y-5">
+      <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start">
       {/* ----------------------------------------------------- summary card */}
       <section className="card overflow-hidden">
         <div className="flex flex-wrap items-start justify-between gap-4 border-b border-hairline p-5 sm:p-6">
@@ -267,9 +263,6 @@ export default function RegistrationStatusPage() {
         </div>
         <StatusTimeline registration={registration} />
       </section>
-
-        </div>
-
       </div>
     </div>
   );

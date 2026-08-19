@@ -30,8 +30,8 @@ const customStyles = {
   },
   headCells: {
     style: {
-      paddingLeft: '20px',
-      paddingRight: '20px',
+      paddingLeft: '16px',
+      paddingRight: '16px',
       fontSize: '11px',
       fontWeight: 600,
       letterSpacing: '0.05em',
@@ -54,7 +54,7 @@ const customStyles = {
       outline: 'none',
     },
   },
-  cells: { style: { paddingLeft: '20px', paddingRight: '20px', paddingTop: '12px', paddingBottom: '12px' } },
+  cells: { style: { paddingLeft: '16px', paddingRight: '16px', paddingTop: '12px', paddingBottom: '12px' } },
   expanderRow: { style: { backgroundColor: '#F8FAFC', color: BODY } },
   expanderButton: {
     style: {

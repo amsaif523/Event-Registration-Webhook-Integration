@@ -30,7 +30,7 @@ function buildColumns(eventName, onView, isNew) {
       name: 'Reference',
       sortable: true,
       sortField: 'reference',
-      width: '150px',
+      width: '130px',
       selector: (row) => row.reference,
       cell: (row) => (
         <span className="inline-flex items-center gap-2">
@@ -47,7 +47,7 @@ function buildColumns(eventName, onView, isNew) {
       name: 'Name',
       sortable: true,
       sortField: 'first_name',
-      minWidth: '150px',
+      minWidth: '140px',
       selector: (row) => `${row.first_name} ${row.last_name}`,
       cell: (row) => (
         <span className="whitespace-nowrap font-medium text-ink">
@@ -59,7 +59,7 @@ function buildColumns(eventName, onView, isNew) {
       name: 'Contact',
       sortable: true,
       sortField: 'email',
-      minWidth: '200px',
+      minWidth: '190px',
       selector: (row) => row.email,
       cell: (row) => (
         <div className="min-w-0 py-1">
@@ -72,45 +72,42 @@ function buildColumns(eventName, onView, isNew) {
       name: 'Event',
       sortable: true,
       sortField: 'event_id',
-      minWidth: '160px',
+      minWidth: '150px',
       selector: (row) => eventName(row.event_id),
       cell: (row) => <span className="block truncate">{eventName(row.event_id)}</span>,
     },
     {
+      // Ticket ID folded in here rather than its own column — it only ever
+      // exists alongside a confirmed status, so pairing them saves a column
+      // without hiding anything.
       name: 'Status',
       sortable: true,
       sortField: 'status',
-      width: '130px',
+      width: '150px',
       selector: (row) => row.status,
-      cell: (row) => <Badge domain="registration" value={row.status} size="sm" />,
+      cell: (row) => (
+        <div className="py-1">
+          <Badge domain="registration" value={row.status} size="sm" />
+          {row.ticket_id && (
+            <p className="tabular mt-1 font-mono text-[12px] text-meta">{row.ticket_id}</p>
+          )}
+        </div>
+      ),
     },
     {
       name: 'Registered',
       sortable: true,
       sortField: 'created_at',
-      width: '130px',
+      width: '120px',
       selector: (row) => row.created_at,
       cell: (row) => (
         <span className="tabular whitespace-nowrap text-[13px]">{formatDate(row.created_at)}</span>
       ),
     },
     {
-      name: 'Ticket ID',
-      sortable: true,
-      sortField: 'ticket_id',
-      width: '150px',
-      selector: (row) => row.ticket_id ?? '',
-      cell: (row) =>
-        row.ticket_id ? (
-          <span className="tabular font-mono text-[13px] text-ink">{row.ticket_id}</span>
-        ) : (
-          <span className="text-meta">—</span>
-        ),
-    },
-    {
       // The row is clickable, but only this tells you so.
       name: 'Actions',
-      width: '90px',
+      width: '80px',
       button: true,
       cell: (row) => (
         <IconButton icon="eye" label="View full record" tone="brand" onClick={() => onView(row)} />
@@ -173,6 +170,13 @@ export default function AdminRegistrationsPage() {
   const status = dataLoading ? 'loading' : list.status;
   const error = list.error ?? dataError;
   const visible = list.items;
+
+  // Flips whenever the query changes underneath the table, so the datatable's
+  // own pagination snaps back to page 1 instead of showing a stale page number.
+  const [resetPage, setResetPage] = useState(false);
+  useEffect(() => {
+    setResetPage((flag) => !flag);
+  }, [list.search, list.filters, list.perPage]);
 
   const eventName = (id) => events.find((event) => event.id === id)?.name ?? 'Unknown event';
 
@@ -368,7 +372,14 @@ export default function AdminRegistrationsPage() {
               loading={status === 'loading'}
               skeletonColumns={8}
               emptyState={emptyState}
-              pagination={false}
+              pagination
+              paginationServer
+              paginationTotalRows={list.total}
+              paginationPerPage={Number(list.perPage) || 10}
+              paginationDefaultPage={list.page}
+              paginationResetDefaultPage={resetPage}
+              onChangePage={list.setPage}
+              onChangeRowsPerPage={(newPerPage) => list.setPerPage(newPerPage)}
               sortServer
               // 6 = the "Registered" column. Without this the header shows no
               // sort arrow, so a list that IS newest-first looks unsorted.
@@ -378,7 +389,6 @@ export default function AdminRegistrationsPage() {
               onRowClicked={setSelected}
               pointerOnHover
               conditionalRowStyles={newRowStyles}
-              footer={<Pagination {...list} label="registrations" />}
             />
 
             {/* Mobile: cards and pagination inside one bordered panel. */}

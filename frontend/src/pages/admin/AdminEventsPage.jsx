@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAppData } from '../../state/AppDataContext.jsx';
 import { useNavigation } from '../../state/NavigationContext.jsx';
 import { useToast } from '../../state/ToastContext.jsx';
@@ -115,6 +115,9 @@ export default function AdminEventsPage() {
   const { toast } = useToast();
 
   const [panel, setPanel] = useState({ open: false, event: null });
+  // Flips whenever the query changes underneath the table, so the datatable's
+  // own pagination snaps back to page 1 instead of showing a stale page number.
+  const [resetPage, setResetPage] = useState(false);
 
   // Search, filter, sort and pagination all go to the data layer as one query;
   // nothing is filtered out of an array this component is holding.
@@ -131,6 +134,10 @@ export default function AdminEventsPage() {
   const status = dataLoading ? 'loading' : list.status;
   const error = list.error ?? dataError;
   const visible = list.items;
+
+  useEffect(() => {
+    setResetPage((flag) => !flag);
+  }, [list.search, list.filters, list.perPage]);
 
   const save = async (input) => {
     const saved = await saveEvent(input);
@@ -227,10 +234,16 @@ export default function AdminEventsPage() {
               loading={status === 'loading'}
               skeletonColumns={6}
               emptyState={emptyState}
-              pagination={false}
+              pagination
+              paginationServer
+              paginationTotalRows={list.total}
+              paginationPerPage={Number(list.perPage) || 10}
+              paginationDefaultPage={list.page}
+              paginationResetDefaultPage={resetPage}
+              onChangePage={list.setPage}
+              onChangeRowsPerPage={(newPerPage) => list.setPerPage(newPerPage)}
               sortServer
               onSort={(column, direction) => list.setSort(column.sortField, direction)}
-              footer={<Pagination {...list} label="events" />}
             />
 
             {/* Mobile: one bordered panel holding the cards and their pagination,
