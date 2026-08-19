@@ -1,0 +1,393 @@
+{
+  "info": {
+    "_postman_id": "eventide-api-collection",
+    "name": "Eventide — Event Registration & Webhook API",
+    "description": "Every endpoint in the Eventide backend. There are no path parameters or query strings anywhere in this API — every identifier (event id, registration reference, filters) travels in the JSON request body, so every request except the health check is a POST to a fixed, literal path. See CLAUDE.md section 6 for why.\n\nAuth is cookie-based (HttpOnly `access_token` / `refresh_token`), set by `POST /api/auth/login`. Postman's cookie jar carries them automatically after you run that request once against `{{base_url}}`, so the requests marked \"Admin\" in their folder need no manual header — just run Login first.\n\nThe one exception is `POST /api/webhooks/ticketing`, which is authenticated by an HMAC-SHA256 signature instead of a session, because the caller is another server, not a browser. See that request's description for how to compute it, or use `POST /api/dev/simulate-webhook` (also in this collection) to have the backend sign and dispatch a test delivery for you without ever exposing the secret.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost/backend/public", "type": "string" },
+    { "key": "admin_username", "value": "admin", "type": "string" },
+    { "key": "admin_password", "value": "ChangeMe123!!", "type": "string" },
+    { "key": "event_id", "value": "1", "type": "string" },
+    { "key": "reference", "value": "EVT-7QK3M2XD", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/health",
+              "host": ["{{base_url}}"],
+              "path": ["api", "health"]
+            },
+            "description": "No auth, no body. Confirms the app booted and the DB connection is live: `{ \"success\": true, \"data\": { \"status\": \"ok\", \"db\": \"connected\" } }`."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{admin_username}}\",\n  \"password\": \"{{admin_password}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Public. Sets the `access_token` and `refresh_token` HttpOnly cookies on success and returns the signed-in user. Run this once and every other 'Admin' request in this collection authenticates automatically via the cookie jar. Five failed attempts locks the account for a period — see `AuthService`."
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh session",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}", "options": { "raw": { "language": "json" } } },
+            "url": {
+              "raw": "{{base_url}}/api/auth/refresh",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "refresh"]
+            },
+            "description": "Public (not behind Authenticate on purpose — the whole point is the access token already expired). Rotates the refresh token and issues a new short-lived access token. Presenting an already-rotated refresh token is treated as replay and revokes the whole session family."
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}", "options": { "raw": { "language": "json" } } },
+            "url": {
+              "raw": "{{base_url}}/api/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "logout"]
+            },
+            "description": "Public. Revokes the current refresh token and clears both cookies."
+          },
+          "response": []
+        },
+        {
+          "name": "Who am I",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}", "options": { "raw": { "language": "json" } } },
+            "url": {
+              "raw": "{{base_url}}/api/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "me"]
+            },
+            "description": "Admin (session cookie required). Lets the frontend restore a session on page load without keeping any client-side state."
+          },
+          "response": []
+        },
+        {
+          "name": "Logout everywhere",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}", "options": { "raw": { "language": "json" } } },
+            "url": {
+              "raw": "{{base_url}}/api/auth/logout-everywhere",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "logout-everywhere"]
+            },
+            "description": "Admin. Revokes every refresh token for the signed-in user — ends every session on every device."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Events",
+      "item": [
+        {
+          "name": "List published events",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"search\": \"\",\n  \"page\": 1,\n  \"per_page\": 10,\n  \"sort_by\": \"event_date\",\n  \"sort_dir\": \"asc\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/events/list",
+              "host": ["{{base_url}}"],
+              "path": ["api", "events", "list"]
+            },
+            "description": "Public. Forced to `status = published` server-side regardless of what the client sends — a draft never appears here. Each event includes `seats_left`, computed from `capacity - confirmed/pending registrations`."
+          },
+          "response": []
+        },
+        {
+          "name": "View event",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": {{event_id}}\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/events/view",
+              "host": ["{{base_url}}"],
+              "path": ["api", "events", "view"]
+            },
+            "description": "Public, but a draft event 404s (`EVENT_NOT_FOUND`) unless the caller is signed in as staff."
+          },
+          "response": []
+        },
+        {
+          "name": "Admin: list all events",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"search\": \"\",\n  \"status\": \"all\",\n  \"page\": 1,\n  \"per_page\": 10,\n  \"sort_by\": \"event_date\",\n  \"sort_dir\": \"desc\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/events/admin-list",
+              "host": ["{{base_url}}"],
+              "path": ["api", "events", "admin-list"]
+            },
+            "description": "Admin. Same pagination/search/sort shape as the public list, but every status including `draft` and `cancelled` is visible."
+          },
+          "response": []
+        },
+        {
+          "name": "Admin: view event (any status)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": {{event_id}}\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/events/admin-view",
+              "host": ["{{base_url}}"],
+              "path": ["api", "events", "admin-view"]
+            },
+            "description": "Admin. Same handler as the public 'View event', reached through Authenticate so drafts are visible."
+          },
+          "response": []
+        },
+        {
+          "name": "Create event",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Backend Meetup #12\",\n  \"description\": \"Monthly meetup for backend engineers.\",\n  \"event_date\": \"2026-11-14 18:30:00\",\n  \"venue\": \"WeWork, Koramangala\",\n  \"capacity\": 80,\n  \"status\": \"published\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/events/create",
+              "host": ["{{base_url}}"],
+              "path": ["api", "events", "create"]
+            },
+            "description": "Admin. `name`, `event_date` and `venue` are required; `capacity` must be between 1 and 100000; `status` defaults to `draft` if omitted. Returns 422 with per-field errors on validation failure."
+          },
+          "response": []
+        },
+        {
+          "name": "Update event",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": {{event_id}},\n  \"capacity\": 120,\n  \"status\": \"published\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/events/update",
+              "host": ["{{base_url}}"],
+              "path": ["api", "events", "update"]
+            },
+            "description": "Admin. Partial update — only the fields present in the body change. Lowering `capacity` below seats already taken is rejected with a 422, not silently clamped."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Registrations",
+      "item": [
+        {
+          "name": "Register for an event",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": {{event_id}},\n  \"first_name\": \"Priya\",\n  \"last_name\": \"Sharma\",\n  \"email\": \"priya.sharma@example.com\",\n  \"phone\": \"+91 98765 43210\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/registrations/create",
+              "host": ["{{base_url}}"],
+              "path": ["api", "registrations", "create"]
+            },
+            "description": "Public. Capacity is enforced inside a transaction with `SELECT ... FOR UPDATE` on the event row, so it cannot be oversold under parallel requests. Returns 201 with a unique `EVT-XXXXXXXX` reference and `status: pending`. Returns 409 if the event is full or this email already registered for it, 422 on validation failure."
+          },
+          "response": []
+        },
+        {
+          "name": "Check registration status",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reference\": \"{{reference}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/registrations/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "registrations", "status"]
+            },
+            "description": "Public, keyed only by the reference — it is the bearer credential for this registration, which is why it is random rather than sequential and never appears in a URL."
+          },
+          "response": []
+        },
+        {
+          "name": "Admin: list registrations",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"search\": \"\",\n  \"status\": \"all\",\n  \"event_id\": \"all\",\n  \"page\": 1,\n  \"per_page\": 10\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/registrations/list",
+              "host": ["{{base_url}}"],
+              "path": ["api", "registrations", "list"]
+            },
+            "description": "Admin. Behind authentication because it returns every registrant's name, email and phone."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Webhooks",
+      "item": [
+        {
+          "name": "Ticketing webhook (signed)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Signature", "value": "sha256=<hex-hmac>", "description": "HMAC-SHA256 over `\"{timestamp}.{raw_body}\"` using WEBHOOK_SECRET, hex-encoded, prefixed 'sha256='." },
+              { "key": "X-Timestamp", "value": "1700000000", "description": "Unix seconds. Must be within WEBHOOK_TOLERANCE_SECONDS (default 300s) of server time or the request is rejected as stale." },
+              { "key": "X-Webhook-Id", "value": "whd_example_001", "description": "Delivery id. Redelivering the same id is logged as a duplicate and returns 200 without changing anything." }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"ticket.confirmed\",\n  \"registration_reference\": \"{{reference}}\",\n  \"ticket_id\": \"TKT-1234-AB12\",\n  \"status\": \"confirmed\",\n  \"confirmed_at\": \"2026-08-19T10:00:00+00:00\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/webhooks/ticketing",
+              "host": ["{{base_url}}"],
+              "path": ["api", "webhooks", "ticketing"]
+            },
+            "description": "Unauthenticated by session — the caller is another server, not a browser, and proves itself with the HMAC signature instead. This path is fixed by the assignment.\n\nPostman cannot compute the signature for you (WEBHOOK_SECRET never leaves the server, by design — see CLAUDE.md section 11), so to fire this manually you need the secret from your own `backend/.env` and must compute:\n\n```\nsignature = 'sha256=' + HMAC_SHA256(secret, timestamp + '.' + raw_body_bytes)\n```\n\nusing the *exact* raw bytes of the body above — re-formatting the JSON breaks the signature. For a working demo without touching the secret, use 'Simulate ticketing webhook' in the Dev Tools folder, or the 'Simulate ticketing system' panel in the admin UI; both sign server-side.\n\nOutcomes: valid signature + first delivery → 200, registration flips to `confirmed`, log row `processed`. Bad signature → 401, log row `invalid_signature`, registration untouched. Repeat `X-Webhook-Id` → 200, log row `duplicate`, registration untouched."
+          },
+          "response": []
+        },
+        {
+          "name": "Admin: webhook delivery log",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"search\": \"\",\n  \"status\": \"all\",\n  \"registration_reference\": \"\",\n  \"page\": 1,\n  \"per_page\": 10\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/webhooks/list",
+              "host": ["{{base_url}}"],
+              "path": ["api", "webhooks", "list"]
+            },
+            "description": "Admin. Every inbound delivery is logged here regardless of outcome — `processed`, `duplicate`, `invalid_signature` or `failed` — this is the audit trail."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Dashboard summary",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}", "options": { "raw": { "language": "json" } } },
+            "url": {
+              "raw": "{{base_url}}/api/dashboard/summary",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dashboard", "summary"]
+            },
+            "description": "Admin. One call for the whole dashboard screen: event/registration counts, 8 most recent registrations, 8 most recent webhook deliveries, and the server's own clock (`server_time`), so the client can diff polls without trusting its own skewed clock."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Dev Tools",
+      "item": [
+        {
+          "name": "Simulate ticketing webhook",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reference\": \"{{reference}}\",\n  \"mode\": \"valid\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/dev/simulate-webhook",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dev", "simulate-webhook"]
+            },
+            "description": "Public, but only when `DEMO_MODE=true` — no session required, since it is meant to be triggered from the public tracking page by whoever just registered, not only from the admin panel. Builds the exact payload the real ticketing provider would send, signs it **on the server** with the real WEBHOOK_SECRET, and dispatches it through the same `WebhookService.handle()` the public endpoint uses — nothing about verification is bypassed or faked.\n\n`mode` is one of:\n- `valid` — confirms the registration (the happy path).\n- `bad_signature` — signed with the wrong key; expect 401 and an `invalid_signature` log row.\n- `duplicate` — reuses a fixed delivery id for this reference so it collides with a prior send; expect 200 and a `duplicate` log row, registration unchanged.\n- `stale` — timestamped 10 minutes in the past, outside the tolerance window; demonstrates replay protection.\n- `cancel` — sends `ticket.cancelled` instead of `ticket.confirmed`."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
