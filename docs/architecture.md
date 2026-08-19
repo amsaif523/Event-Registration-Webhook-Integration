@@ -245,7 +245,6 @@ see the scaling answer below.
 
 ## Scaling this to thousands of concurrent users
 
-Roughly in the order I'd actually do them, because they're not equally urgent:
 
 **Get the webhook endpoint off the request thread first.** Right now, verifying a signature,
 claiming idempotency, and applying the state transition all happen synchronously inside the HTTP

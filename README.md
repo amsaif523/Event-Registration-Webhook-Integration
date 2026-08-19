@@ -401,8 +401,7 @@ for both, the session/auth model, and the data model.
 
 ## If this had thousands of concurrent users
 
-The full answer with reasoning is in `docs/architecture.md`; the short version, roughly in the
-order I'd actually do them:
+The full answer with reasoning is in `docs/architecture.md`; 
 
 1. **Move webhook processing off the request thread.** Right now the endpoint verifies, logs, and
    applies the state transition all inside the HTTP request the ticketing provider is waiting on.
