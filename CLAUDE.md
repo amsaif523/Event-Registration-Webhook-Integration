@@ -267,51 +267,9 @@ section originally specified.
 
 ---
 
-## 7. Key technical decisions (be ready to defend these in the demo)
 
-1. **Front controller + tiny router.** One entry point, one route table. Easier to reason about
-   than scattered PHP files, and it makes the whole app testable because `Request` is a plain
-   object rather than a read of `$_SERVER`.
-2. **Action-style POST endpoints, identifiers only in the body.** This is a deliberate departure
-   from REST conventions, so have the reasoning ready: URLs end up in Apache access logs, browser
-   history, bookmarks, and `Referer` headers sent to any third-party asset on the page. A
-   registration reference in a URL is a bearer token for someone else's personal data sitting in
-   plaintext logs. Bodies are not logged by default and are not carried in `Referer`. It also
-   gives one uniform request shape for validation and signing. The honest tradeoff: we lose HTTP
-   caching, and `POST /api/events/view` is not idempotent by HTTP semantics even though it is
-   read-only in practice. If asked "why not REST", say exactly that, do not pretend there is no
-   cost.
-3. **Request is injected, never read from superglobals inside controllers.** This is what lets
-   PHPUnit dispatch a fake request without an HTTP server.
-4. **Capacity enforced inside a transaction with `SELECT ... FOR UPDATE` on the event row.**
-   A naive count-then-insert has a race: two simultaneous requests both see 49/50 and both
-   insert. Locking the event row serialises them. This is the single most likely thing the
-   reviewer probes.
-5. **Reference numbers are random, not sequential.** `EVT-` plus 8 chars from a non-ambiguous
-   alphabet. Keeping references out of URLs stops them leaking into logs, but it does not stop
-   guessing: sequential references would let anyone walk the whole registration list by
-   incrementing a number in a POST body. Randomness is what actually defends the lookup endpoint.
-6. **HMAC-SHA256 over the raw request body**, sent as `X-Signature: sha256=<hex>`. Compare with
-   `hash_equals` to avoid timing attacks. The body must be read with `file_get_contents('php://input')`
-   *before* any JSON decode, because re-encoding changes the bytes and breaks the signature.
-7. **Replay window.** `X-Timestamp` header is included in the signed payload; requests older than
-   5 minutes are rejected. Prevents a captured request being replayed later.
-8. **Idempotency via a unique index, not a lookup.** We `INSERT` into `webhook_events` with a
-   unique `delivery_id` first. If MySQL throws a duplicate-key error, it is a repeat delivery, we
-   log it as `duplicate` and return `200 OK`. Checking-then-inserting has the same race problem as
-   the capacity check. Returning 200 (not an error) is deliberate: telling the sender "already
-   handled" stops it retrying forever.
-9. **State transition is guarded.** Only `pending -> confirmed` is allowed. A late duplicate
-   cannot un-cancel a cancelled registration.
-10. **Same-origin deployment, so no CORS.** Frontend build and backend live under one domain. In
-   dev, Vite proxies `/api` to Apache. Fewer moving parts and no preflight surprises for the
-   reviewer.
-11. **Raw SQL migrations with a `migrations` tracking table.** A reviewer can read the SQL
-    directly. No hidden ORM behaviour.
 
----
-
-## 8. Build phases
+## 7. Build phases
 
 Work strictly in order. Each phase ends with something runnable, and gets its own commit(s).
 
@@ -419,17 +377,12 @@ Use a separate `*_test` database. Each test runs inside a transaction that is ro
   optional: with no ids in URLs, a reviewer cannot exercise the API from a browser address bar,
   and every request needs a JSON body. Ship ready-to-run requests for all nine endpoints,
   including the failing webhook cases.
-- Answer the "thousands of users" question in the README. Suggested three: (a) move webhook
-  processing to a queue so the endpoint just validates, logs, and returns fast, (b) replace the
-  row-lock capacity check with a reserved-seats counter plus caching, and add read replicas or
-  Redis for the hot event-list query, (c) add real authentication, rate limiting, and structured
-  logging/monitoring. Explain the reasoning, not just the list.
 - Final pass: no secrets in git history, live URL working, credentials sent in the submission
   message rather than the repo.
 
 ---
 
-## 9. Conventions
+## 8. Conventions
 
 - PHP: PSR-12, `declare(strict_types=1)` at the top of every file, typed properties and return
   types everywhere.
@@ -445,7 +398,7 @@ Use a separate `*_test` database. Each test runs inside a transaction that is ro
 
 ---
 
-## 10. Local environment
+## 9. Local environment
 
 **XAMPP (primary)**
 - PHP 8.2+, Apache with `mod_rewrite` enabled, MariaDB.
@@ -474,7 +427,7 @@ DEMO_MODE=true
 
 ---
 
-## 11. Never do
+## 10. Never do
 
 - Put an id, reference, token, email, or filter in a URL path or query string, on the API or the
   frontend. Everything goes in the body.
@@ -483,11 +436,11 @@ DEMO_MODE=true
 - JSON-decode the webhook body before computing the signature.
 - Trust `capacity` checks done outside a transaction.
 - Leave `APP_DEBUG=true` on the live URL.
-- Write an `AI.md` that only lists what AI generated. The assignment asks what was rejected too.
+- Write an `AI.md` that only lists what AI generated.
 
 ---
 
-## 12. README contents checklist
+## 11. README contents checklist
 
 The assignment spells these out bullet by bullet in sections 9 and 10. A reviewer is scoring
 "ability to explain and reproduce your work", so treat a missing bullet as a lost mark. Tick each
@@ -529,25 +482,3 @@ you. Before submitting, delete your local copy, clone fresh into a new folder, a
 instructions literally. Whatever breaks is what the reviewer will hit.
 
 ---
-
-## 13. Phase 9 - Demo and discussion prep
-
-Section 14 of the assignment says they may ask you to make a small change live or explain how you
-would solve a new requirement. Section 12 also scores **Problem Solving**, which nothing in the
-codebase demonstrates by itself. Prepare for both.
-
-- **Leave a paper trail of one real problem.** Pick something that genuinely went wrong during
-  the build (signature mismatch, a race in the capacity check, a rewrite rule that swallowed
-  `/api`), and write it up in the README or AI.md: what broke, how you diagnosed it, what you
-  changed. This is the only artifact that speaks to the Problem Solving row.
-- **Know your own code cold.** They stated plainly that they want to know whether you understand
-  what you have written. Be able to walk any file without reading it first.
-- **Rehearse the three likely live changes:** add a field to the registration form end to end,
-  add a new webhook event type such as `ticket.cancelled`, add a filter to the event list.
-  Each should be doable in a few minutes because the structure is consistent.
-- **Have the tradeoff answers ready:** why no framework, why POST-only with ids in the body, why
-  a row lock instead of a unique constraint for capacity, why 200 on a duplicate webhook, and
-  what you would do differently with more time.
-- **Rehearse the demo in order:** register, show the pending reference, fire the webhook, show
-  confirmation, then deliberately show the invalid-signature and duplicate rejections and the
-  `webhook_events` log. Roughly five minutes, no dead air.
