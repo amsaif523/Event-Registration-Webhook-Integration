@@ -45,8 +45,7 @@ none of the protected endpoints will work. Postman does this automatically once 
 through the collection; curl needs `-c cookies.txt -b cookies.txt`.
 
 **The webhook endpoint** doesn't use cookies at all. It's called by a server, not a browser session,
-so it proves itself with an HMAC signature instead — see that section below, it's the one worth
-reading carefully.
+so it proves itself with an HMAC signature instead.
 
 Endpoints marked **admin** below need a signed-in session. Call `/api/auth/login` first.
 
