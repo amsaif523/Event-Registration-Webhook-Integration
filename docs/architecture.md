@@ -29,9 +29,6 @@ rather than writing new CSS per screen.
 
 ## The request lifecycle
 
-Every request — one GET aside — goes through the same eight hops, and once you know this you can
-answer "how does endpoint X work" for any endpoint without having read that specific controller:
-
 ```
 public/index.php                    ← Apache/nginx rewrites everything here
   → bootstrap.php                   ← autoload, load .env, set timezone
