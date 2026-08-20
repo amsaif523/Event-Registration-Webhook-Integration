@@ -5,27 +5,7 @@ This is the "why does it look like this" document. If you just want endpoint sha
 actually is, where the two race conditions in this app get closed, how sessions work, and the
 answer to "how would this hold up at real scale."
 
-## Stack, and why each piece
 
-| Layer | Choice | Why |
-|---|---|---|
-| Backend | Plain PHP 8.2, no framework | The assignment is really asking "can you build routing, validation, sessions and a webhook pipeline yourself, or do you only know how to configure a framework that does it for you." Using Laravel would have answered a different question. |
-| DB access | PDO, prepared statements, no ORM | Every query in the repo is one you can read top to bottom. Nothing generated, nothing that needs `->toSql()` to debug. |
-| Database | MySQL 8 / MariaDB 10.4+ | XAMPP — the local dev setup most people reaching for a PHP assignment already have — ships MariaDB, so the schema deliberately avoids anything MySQL-8-only (no JSON columns, no window functions, no functional indexes). Plain `TEXT` for the webhook payload column keeps both engines equally happy. |
-| Frontend | React 18 + Vite + Tailwind | Nothing unusual here — fast dev server, no build ceremony, and Tailwind means the UI states (loading/empty/error, which the assignment explicitly grades) don't turn into a separate CSS file to maintain. |
-| Auth | Hand-rolled JWT + DB-backed refresh tokens | Covered in its own section below — this is the one place the build went past what the brief asked for. |
-
-Explicitly not used: Docker, an ORM, Redis, queues, a Node backend. Composer is here purely for
-PSR-4 autoloading and PHPUnit — if it's missing, `bootstrap.php` falls back to a plain
-`spl_autoload_register`, so the app still boots on a machine that's never run `composer install`.
-
-Everything above is about how the app *behaves*. How it *looks* is a separate, equally deliberate
-decision, specified in [`figma-ui-prompt.md`](../figma-ui-prompt.md) at the repo root — exact
-palette, the Plus Jakarta Sans / Inter type pairing, spacing grid, and a screen-by-screen behavior
-spec (every button state, every empty/loading/error state, mobile breakpoints down to 390px). It's
-the reason the frontend has one consistent visual system instead of each screen inventing its own —
-`components/ui/*` implements what that brief specifies once, and every page composes from those
-rather than writing new CSS per screen.
 
 ## The request lifecycle
 
@@ -166,19 +146,6 @@ won't match, and the affected-row count tells the code whether the transition ac
 Every outcome — including the rejected ones — gets a row in `webhook_events`. That table is the
 audit trail, and being able to show *why* a delivery was rejected is worth as much in a demo as
 showing one that succeeded.
-
-### Making this visible to a reviewer who won't run curl
-
-The brief says a reviewer opens a public URL. Without something in the browser to trigger a
-webhook, the entire second half of the flow — the part that's actually the point of the assignment
-— is invisible. So the status page has a "Simulate ticketing system" panel that posts to
-`POST /api/dev/simulate-webhook`, which signs a payload **on the server** and dispatches it through
-the exact same `WebhookService::handle()` the real endpoint uses. Two things about that are
-deliberate: `WEBHOOK_SECRET` never reaches the browser (a client-side simulator would have to ship
-the secret to JavaScript to sign anything, which defeats the entire premise of having a secret),
-and nothing about verification is skipped or mocked — it's a real signature checked by the real
-code path, only the "who's calling" part is stood in for. It's gated behind `DEMO_MODE=true` and
-refuses to run at all otherwise.
 
 ## Sessions
 
