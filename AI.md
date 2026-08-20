@@ -1,9 +1,7 @@
 # AI.md
 
-I built this with Claude (Anthropic's Claude Code CLI) as my day-to-day pair programmer, not as a
-one-off "generate me an app" prompt. This is an honest account of where it actually helped, what I
-kept as-is, and — this is the part generic AI.md files skip — what it got wrong or what I
-deliberately overrode, and why.
+I built this with Claude Code as my day-to-day pair programmer, not as a
+one-off "generate me an app" prompt.
 
 ## Where I used it
 
